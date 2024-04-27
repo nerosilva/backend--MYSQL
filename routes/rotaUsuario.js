@@ -7,13 +7,16 @@ const jwt = require('jsonwebtoken');
 // GET - Buscar um usuário pelo ID
 router.get("/:id", (req, res, next) => {
     const { id } = req.params;
-    mysql.query("SELECT * FROM usuario WHERE id = ?", [id], (error, result) => {
+    mysql.query("SELECT * FROM usuario WHERE id=?", [id], (error, result) => {
         if (error) {
-            return res.status(500).send({ error: error.message });
+            return res.status(500).send({
+                error: error.message
+             });
         }
         if (result.length == 0) {
             return res.status(404).send({ mensagem: "Usuário não encontrado" });
         }
+        console.log(result)
         res.status(200).send({
             mensagem: "Usuário encontrado",
             usuario: result[0]
@@ -46,7 +49,11 @@ router.post('/login', (req, res, next) => {
         }
         const usuario = results[0];
         bcrypt.compare(senha, usuario.senha, (bcryptError, result) => {
-            if (bcryptError || !result) {
+            if (bcryptError) {
+                console.log(bcryptError); // Correção aqui para logar o erro correto
+                return res.status(500).send({ mensagem: "Erro ao verificar a senha" });
+            }
+            if (!result) {
                 return res.status(401).send({ mensagem: "Senha incorreta" });
             }
             const token = jwt.sign({ id: usuario.id, email: usuario.email }, 'secreto', { expiresIn: '1h' });
@@ -95,6 +102,7 @@ function validateEmail(email) {
 router.put("/", (req, res, next) => {
     const { id, nome, email, senha } = req.body;
     mysql.query("UPDATE usuario SET nome = ?, email = ?, senha = ? WHERE id = ?", [nome, email, senha, id], (error) => {
+        console.log(error)
         if (error) {
             return res.status(500).send({ error: error.message });
         }
