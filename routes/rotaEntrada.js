@@ -85,7 +85,7 @@ router.post('/', (req, res, nxt) => {
   }
   if (msg.length > 0) {
     return res.status(400).send({
-      mensagem: "Falha ao cadastrar Entrada.",
+      mensagem: "Falha ao Cadastra Entrada.",
       erros: msg
     });
   }
@@ -103,7 +103,7 @@ router.post('/', (req, res, nxt) => {
       }
       // Atualização de estoque (função atualizarestoque precisa ser adaptada para MySQL)
       res.status(201).send({
-        mensagem: "Entrada criada com sucesso!",
+        mensagem: "Entrada criada com Sucesso!",
         entradaId: results.insertId,
         dados: {
           id_produto,
@@ -136,8 +136,9 @@ router.delete("/:id", (req, res, next) => {
               });
           }
 
+
           res.status(200).send({
-              mensagem: "Entrada excluída com sucesso!"
+              mensagem: "Entrada excluída com Sucesso!"
           });
       });
   });
