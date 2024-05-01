@@ -4,8 +4,11 @@ const mysql = require("../mysql").pool;
 
 // Rota para listar todas as saídas
 router.get("/", (req, res, next) => {
+    console.log("Entrou na rota GET /");
+
     mysql.getConnection((error, connection) => {
         if (error) {
+            console.error("Erro ao obter conexão:", error.message);
             return res.status(500).send({
                 error: error.message
             });
@@ -25,11 +28,13 @@ router.get("/", (req, res, next) => {
                 connection.release(); // Libere a conexão
 
                 if (error) {
+                    console.error("Erro na consulta:", error.message);
                     return res.status(500).send({
                         error: error.message
                     });
                 }
 
+                console.log("Consulta bem-sucedida. Enviando resposta.");
                 res.status(200).send({
                     mensagem: "Aqui está a lista de Saída",
                     produtos: rows
@@ -43,7 +48,6 @@ router.get("/", (req, res, next) => {
 router.post('/', (req, res) => {
     const { id_produto, quantidade, valor_unitario, data_saida } = req.body;
 
-    // Verificar se o id_produto existe na tabela estoque
     mysql.getConnection((error, connection) => {
         if (error) {
             return res.status(500).send({
@@ -51,12 +55,11 @@ router.post('/', (req, res) => {
             });
         }
 
-        // O produto existe no estoque, então podemos continuar com a inserção
         connection.query(
             "INSERT INTO `saida`( `id_produto`, `quantidade`, `valor_unitario`, `data_saida`) VALUES (?,?,?,?)",
             [id_produto, quantidade, valor_unitario, data_saida],
             (error, result) => {
-                connection.release(); // Liberar a conexão
+                connection.release();
 
                 if (error) {
                     console.error(error.message);
@@ -96,7 +99,7 @@ router.delete("/:id", (req, res, next) => {
         const values = [id];
   
         connection.query(query, values, (error, result) => {
-            connection.release(); // Liberar conexão após exclusão
+            connection.release();
   
             if (error) {
                 return res.status(500).send({
@@ -105,14 +108,10 @@ router.delete("/:id", (req, res, next) => {
             }
   
             res.status(200).send({
-                mensagem: "Saida excluída com sucesso!"
+                mensagem: "Saída excluída com sucesso!"
             });
         });
     });
-  });
-  
-  // As outras funções, como `atualizarestoque`, também precisam ser adaptadas seguindo o exemplo acima.
-  
-// Mantive o trecho de código da função atualizarEstoque comentado, caso você queira revisá-lo posteriormente
+});
 
 module.exports = router;
