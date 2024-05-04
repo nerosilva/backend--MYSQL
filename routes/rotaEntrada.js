@@ -1,11 +1,7 @@
 const express = require("express");
 const router = express.Router();
-// const bcrypt = require('bcrypt');
-// const jwt = require('jsonwebtoken');
-// Assumindo que "../mysql" exporta a pool de conexão como "pool"
 const mysql = require("../mysql").pool;
 
-// Criação de tabela de entrada no banco de dados, caso já não exista
 mysql.query(`
   CREATE TABLE IF NOT EXISTS entrada (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -19,38 +15,31 @@ mysql.query(`
   }
 });
 
-// Rota para obter as entradas
 router.get("/", (req, res, next) => {
-  const { id } = req.params;
-
   mysql.query(` 
-                SELECT 
-                entrada.id as id,
-                entrada.quantidade,
-                entrada.id_produto as id_produto,
-                produto.descricao as descricao,
-                entrada.valor_unitario as valor_unitario,
-                entrada.data_entrada as data_entrada
-                FROM entrada
-                INNER JOIN produto on
-                entrada.id_produto =produto.id                
-                `
-                
-                
-                , (error, results, fields) => {
-    if (error) {
-      return res.status(500).send({
-        error: error.message
+    SELECT 
+    entrada.id as id,
+    entrada.quantidade,
+    entrada.id_produto as id_produto,
+    produto.descricao as descricao,
+    entrada.valor_unitario as valor_unitario,
+    entrada.data_entrada as data_entrada
+    FROM entrada
+    INNER JOIN produto on
+    entrada.id_produto = produto.id`, 
+    (error, results, fields) => {
+      if (error) {
+        return res.status(500).send({
+          error: error.message
+        });
+      }
+      res.status(200).send({
+        mensagem: "Aqui está a Entrada solicitada",
+        entrada: results
       });
-    }
-    res.status(200).send({
-      mensagem: "Aqui está a Entrada solicitada",
-      entrada: results
     });
-  });
 });
 
-// Rota para obter uma Entrada pelo ID
 router.get("/:id", (req, res, next) => {
   const { id } = req.params;
 
@@ -67,41 +56,24 @@ router.get("/:id", (req, res, next) => {
   });
 });
 
-// Aqui irão as outras rotas adaptadas para MySQL...
-
-// Exemplo de adaptação para inserir uma nova entrada
-router.post('/', (req, res, nxt) => {
+router.post('/', (req, res, next) => {
   const { id_produto, quantidade, valor_unitario, data_entrada } = req.body;
 
-  // Validação dos campos (mantida igual)
-  let msg = [];
-  var regex = /^[0-9]+$/
-  if (!id_produto) {
-    msg.push({ mensagem: "id do produto inválido! Não pode ser vazio." });
-  }
-  if (!quantidade || quantidade.length == 0) {
-    console.log("erro")
-    msg.push({ mensagem: "Quantidade inválida!" });
-  }
-  if (msg.length > 0) {
+  if (!id_produto || !quantidade || !valor_unitario || !data_entrada) {
     return res.status(400).send({
-      mensagem: "Falha ao Cadastra Entrada.",
-      erros: msg
+      mensagem: "Falha ao cadastrar Entrada.",
+      erro: "Todos os campos são obrigatórios."
     });
   }
 
-  // Insere a nova entrada no banco de dados
   mysql.query(`INSERT INTO entrada (id_produto, quantidade, valor_unitario, data_entrada) VALUES (?, ?, ?, ?)`,
     [id_produto, quantidade, valor_unitario, data_entrada], 
     (error, results, fields) => {
-      console.log(error.message)
       if (error) {
         return res.status(500).send({
-          error: error.message,
-          response: null
+          error: error.message
         });
       }
-      // Atualização de estoque (função atualizarestoque precisa ser adaptada para MySQL)
       res.status(201).send({
         mensagem: "Entrada criada com Sucesso!",
         entradaId: results.insertId,
@@ -114,36 +86,20 @@ router.post('/', (req, res, nxt) => {
       });
     });
 });
+
 router.delete("/:id", (req, res, next) => {
   const { id } = req.params;
 
-  mysql.getConnection((error, connection) => {
-      if (error) {
-          return res.status(500).send({
-              error: error.message
-          });
-      }
-
-      const query = "DELETE FROM entrada WHERE id=?";
-      const values = [id];
-
-      connection.query(query, values, (error, result) => {
-          connection.release(); // Liberar conexão após exclusão
-
-          if (error) {
-              return res.status(500).send({
-                  error: error.message
-              });
-          }
-
-
-          res.status(200).send({
-              mensagem: "Entrada excluída com Sucesso!"
-          });
+  mysql.query("DELETE FROM entrada WHERE id = ?", [id], (error, result) => {
+    if (error) {
+      return res.status(500).send({
+        error: error.message
       });
+    }
+    res.status(200).send({
+      mensagem: "Entrada excluída com Sucesso!"
+    });
   });
 });
-
-// As outras funções, como `atualizarestoque`, também precisam ser adaptadas seguindo o exemplo acima.
 
 module.exports = router;
